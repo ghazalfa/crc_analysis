@@ -1,0 +1,12 @@
+{
+  "tumours": 552,
+  "tumours_per_cluster": {
+    "C1": 464,
+    "C2": 88
+  },
+  "genes_in_file": 60616,
+  "genes_kept": 21901,
+  "filter": ">= 10 counts in >= 88 tumours (smallest cluster)",
+  "batch_levels": 18,
+  "median_library_size": 39482348
+}

@@ -1,0 +1,8 @@
+k	mean_silhouette	min_cluster_size	cluster_sizes	eligible	chosen
+2	0.2233	88	464,88	True	True
+3	0.1295	88	291,173,88	True	False
+4	0.1117	88	173,153,138,88	True	False
+5	0.1185	54	173,153,88,84,54	True	False
+6	0.1236	24	153,149,88,84,54,24	True	False
+7	0.1262	24	153,149,88,54,53,31,24	True	False
+8	0.1101	24	153,88,86,63,54,53,31,24	True	False

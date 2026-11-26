@@ -1,0 +1,8 @@
+name,role,url,md5
+TCGA-COAD.somaticmutation_wxs.tsv.gz,mutation,https://gdc.xenahubs.net/download/TCGA-COAD.somaticmutation_wxs.tsv.gz,0937f38ecf8c0d1d0e20adf1bdc82a51
+TCGA-READ.somaticmutation_wxs.tsv.gz,mutation,https://gdc.xenahubs.net/download/TCGA-READ.somaticmutation_wxs.tsv.gz,d0a1d547b04a141c435c98ace9d4449d
+TCGA-COAD.star_counts.tsv.gz,expression,https://gdc.xenahubs.net/download/TCGA-COAD.star_counts.tsv.gz,51ec692522a9674c07c41f96c4fd644a
+TCGA-READ.star_counts.tsv.gz,expression,https://gdc.xenahubs.net/download/TCGA-READ.star_counts.tsv.gz,25abda49170e733d851715248ac63a93
+TCGA-COAD.clinical.tsv.gz,clinical,https://gdc.xenahubs.net/download/TCGA-COAD.clinical.tsv.gz,fce43a07464d367ccac4211ba6fe0cc5
+TCGA-READ.clinical.tsv.gz,clinical,https://gdc.xenahubs.net/download/TCGA-READ.clinical.tsv.gz,5b9170083b8c10749857c4b2a80b2b77
+gencode.v36.annotation.gtf.gene.probemap,annotation,https://gdc.xenahubs.net/download/gencode.v36.annotation.gtf.gene.probemap,59d24b459af04b543cf1d5d4161a98fc

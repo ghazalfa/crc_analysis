@@ -1,0 +1,4 @@
+cluster	n	median_tmb	pct_hypermutated	pct_right_colon	pct_READ	stability	enriched_genes_q05
+C0_no_driver	25	0.37	0.0	10.0	52.0		
+C1	464	2.2	1.1	36.5	27.6	0.924	APC;TP53;KRAS
+C2	88	33.83	89.8	77.0	10.2	0.786	RNF43;BMPR2;BRAF;ACVR2A;KMT2B

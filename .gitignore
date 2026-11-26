@@ -1,0 +1,9 @@
+work/
+.nextflow/
+.nextflow.log*
+data/raw/
+results/
+__pycache__/
+.DS_Store
+cms/rlib/
+cms/install.log

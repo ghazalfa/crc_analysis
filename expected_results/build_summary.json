@@ -1,0 +1,13 @@
+{
+  "samples_in_mutation_files": 596,
+  "primary_tumour_samples": 593,
+  "after_one_aliquot_per_patient": 582,
+  "after_requiring_expression": 577,
+  "protein_altering_mutations": 226431,
+  "hypermutated_tumours": 84,
+  "after_hypermutation_filter": 577,
+  "panel_genes": 109,
+  "panel_genes_kept": 36,
+  "tumours_with_no_kept_driver_mutation": 25,
+  "min_freq": 0.05
+}
