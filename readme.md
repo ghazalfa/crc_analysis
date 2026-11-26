@@ -36,9 +36,9 @@ Expression-based calls depend on normalisation and on the cohort used for centri
 
 | Design choice | Reason |
 |---|---|
-| Nextflow | The whole analysis is automated, resumable and repeatable on another machine. |
-| Driver-gene panel [2] | In an unrestricted matrix, long genes are often mutated by chance. |
-| Jaccard distance | Ignores genes that neither tumour has mutated, which suits a mostly-zero matrix. |
+| Nextflow | The whole analysis is automated and repeatable on another device. |
+| Driver-gene panel [2] | In an unrestricted matrix long genes are often mutated by chance. |
+| Jaccard distance | As matrix is quite sparse it ignores genes that neither tumour has mutated. |
 | Ward linkage | Gave groups large enough to compare as average linkage mostly split off single tumours. |
 | Silhouette and bootstrap | Measure separation and reproducibility which are important properties for creating subtypes |
 | PyDESeq2 with a site covariate | Models counts directly and adjusts for TCGA collection site. |
@@ -72,9 +72,9 @@ flowchart LR
 
 | Stage | What it does | Output folder |
 |---|---|---|
-| `FETCH` (setup) | Downloads each file and checks its md5 | `data/raw` |
-| `BUILD_MUTATION_MATRIX` | Keeps one primary tumour per patient with RNA-seq, then builds a tumour x driver-gene 0/1 matrix of protein-altering mutations | `01_mutation_matrix` |
-| `CLUSTER_MUTATIONS` | Hierarchical clustering; silhouette for k = 2 to 8; 200 bootstrap resamples; tests of genes and clinical variables | `02_clustering` |
+| `FETCH` | Downloads each file and checks its md5 | `data/raw` |
+| `BUILD_MUTATION_MATRIX` | Keeps one primary tumour per patient with RNA-seq then builds a binary oncogene matrix of protein-altering mutations | `01_mutation_matrix` |
+| `CLUSTER_MUTATIONS` | Hierarchical clustering with silhouette scores for k = 2 to 8. 200 bootstrap resamples are ran to assess stability | `02_clustering` |
 | `PLOT_CLUSTERS` | Oncoprint and cluster figures | `05_report/figures` |
 | `PREPARE_COUNTS` | Converts log2(count + 1) back to integer counts and removes low-count genes | `03_counts` |
 | `DIFFERENTIAL_EXPRESSION` | PyDESeq2, `~ batch + cluster`, Benjamini-Hochberg adjusted | `04_differential_expression` |
@@ -108,7 +108,7 @@ The 25 tumours with no kept driver mutation are set aside as `C0_no_driver`.
 
 **Core (you install these):** Nextflow 24.04 or newer (tested with 26.04.7; the install below includes Java) and conda.
 
-**Pipeline (Nextflow installs these through conda, versions pinned in [envs/environment.yml](envs/environment.yml)):**
+**Pipeline (Nextflow installs these through conda and you can see the versions in [envs/environment.yml](envs/environment.yml)):**
 
 | Tool | Version | Used for |
 |---|---|---|
@@ -126,7 +126,7 @@ The 25 tumours with no kept driver mutation are set aside as `C0_no_driver`.
 
 **1. Install conda**
 
-**2. Install Nextflow** :
+**2. Install nextflow** :
 
 ```bash
 conda create -n nextflow --override-channels -c conda-forge -c bioconda nextflow
@@ -134,24 +134,20 @@ conda activate nextflow
 nextflow -version
 ```
 
-This environment is only for Nextflow. Nextflow creates the analysis environment itself.
-
-**3. Get the code:**
+**3. Download the code from the repo:**
 
 ```bash
 git clone https://github.com/ghazalfa/crc_analysis
 cd crc_analysis
 ```
 
-**4. Run:**
+**4. Run the nextflow model:**
 
 ```bash
 nextflow run main.nf
 ```
 
-The first run downloads the data and builds the conda environment (about 1 GB). The analysis uses up to 6 cores and took about 3 minutes on a laptop, including the environment build but not the data download.
-
-**5. Open the report**, `results/05_report/report.md`, in any Markdown viewer (VS Code preview, GitHub).
+**5. Open the report**, `results/05_report/report.md`, in any markdown viewer!
 
 ### Options
 
@@ -165,7 +161,7 @@ Defaults are in [nextflow.config](nextflow.config) but they can be overriden in 
 
 ## Expected results
 
-Reference outputs from the default settings are in [expected_results/](expected_results/). 
+The exact report that is expected from the generated report when using the default settings are in [expected_results/](expected_results/). Below I've listed some of the big takeaways of the expected result but for validating the models output please use that report.
 
 | Stage | Output in `results/` | Expected value | Reference copy |
 |---|---|---|---|
