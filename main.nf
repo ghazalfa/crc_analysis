@@ -211,7 +211,7 @@ process PLOT_DE {
     """
 }
 
-// report.html: the editable wording in report/report_template.md, filled with this run's numbers
+// report.md: the editable wording in templates/report_template.md, filled with this run's numbers
 process MAKE_REPORT {
     publishDir "${params.outdir}/05_report", mode: 'copy'
 
@@ -229,7 +229,7 @@ process MAKE_REPORT {
     val scripts
 
     output:
-    path "report.html"
+    path "report.md"
     path "figures"
 
     script:

@@ -1,19 +1,17 @@
 #!/usr/bin/env python3
-"""MAKE_REPORT: fill report/report_template.md with this run's numbers and tables -> report.html.
+"""MAKE_REPORT: fill templates/report_template.md with this run's numbers and tables -> report.md.
 
 All wording lives in the template. {{name}} marks a value or table supplied here (every pipeline
-parameter is available under its own name). PNG figures are embedded, so report.html is a single
-self-contained file; every figure is also copied to figures/.
+parameter is available under its own name). Every figure is copied to figures/ next to report.md,
+so the figures/<name>.png links in the template resolve.
 """
 import argparse
-import base64
 import json
 import re
 import shutil
 from importlib.metadata import version
 from pathlib import Path
 
-import markdown
 import pandas as pd
 
 
@@ -50,32 +48,12 @@ def fill(template, values):
     return re.sub(r"\{\{\s*(\w+)\s*\}\}", lambda m: str(values[m.group(1)]), template)
 
 
-STYLE = """
-body{font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;color:#0b0b0b;background:#fcfcfb;
-max-width:1040px;margin:0 auto;padding:24px 16px 64px}h1{line-height:1.2}
-h2{margin-top:56px;padding-top:16px;border-top:1px solid #c3c2b7}h3{margin-top:28px}
-.scroll{overflow-x:auto}table{border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:6px 12px 6px 0;border-bottom:1px solid #e1e0d9;vertical-align:top}
-img{max-width:100%;max-height:820px;width:auto;height:auto}
-"""
-
-
-def to_html(text, figures):
-    """Markdown -> one HTML page with figures/<name>.png links replaced by embedded images."""
-    body = markdown.markdown(text, extensions=["tables", "toc", "sane_lists"])
-    body = body.replace("<table>", '<div class="scroll"><table>').replace("</table>", "</table></div>")
-    by_name = {Path(f).name: f for f in figures}
-
-    def embed(m):
-        if m.group(1) not in by_name:
-            raise SystemExit(f"The report template links to a figure that was not made: {m.group(1)}")
-        data = base64.b64encode(Path(by_name[m.group(1)]).read_bytes()).decode()
-        return f'src="data:image/png;base64,{data}"'
-
-    body = re.sub(r'src="figures/([^"]+\.png)"', embed, body)
-    return ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
-            '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            f"<title>CRC mutation clusters report</title><style>{STYLE}</style></head><body>\n{body}\n</body></html>\n")
+def check_figures(text, figures):
+    """Stop the run if the template links to a figure that was not made."""
+    made = {Path(f).name for f in figures}
+    missing = sorted(set(re.findall(r"\(figures/([^)\s]+\.png)\)", text)) - made)
+    if missing:
+        raise SystemExit(f"The report template links to figure(s) that were not made: {', '.join(missing)}")
 
 
 def main():
@@ -83,18 +61,17 @@ def main():
     s = dict(x.split("=", 1) for x in a.settings)
     build, info, counts = load(a.build_summary), load(a.cluster_info), load(a.counts_summary)
     clusters = pd.read_csv(a.cluster_summary, sep="\t")
+    clusters = clusters.drop(columns=["median_tmb", "pct_right_colon", "enriched_genes_q05"])
     ksel = pd.read_csv(a.k_selection, sep="\t")
     tests = pd.read_csv(a.annotation_tests, sep="\t")
     tests["p_value"] = tests["p_value"].map("{:.2g}".format)
+    tests["variable"] = tests["variable"].replace({"project": "READ or COAD"})
     de = pd.read_csv(a.de_summary, sep="\t")
 
     best = ksel.loc[ksel["mean_silhouette"].idxmax()]
     chosen = ksel[ksel["chosen"]].iloc[0]
-    k_text = (f"k = {info['k']} was set by the user (mean silhouette {chosen['mean_silhouette']}). The highest "
-              f"silhouette is at k = {best['k']} ({best['mean_silhouette']}), so silhouette alone would "
-              f"{'agree' if best['k'] == info['k'] else 'not have picked this k'}."
-              if s["k"] != "0" else f"k = {info['k']} was chosen automatically: {info['k_reason']}.")
-
+    k_text = (f"k = {info['k']} in this run.") 
+             
     sample_flow = pd.DataFrame([
         ("Tumour samples in the mutation files", build["samples_in_mutation_files"]),
         ("Primary tumours", build["primary_tumour_samples"]),
@@ -125,7 +102,8 @@ def main():
         "table_software": table(versions),
     }
     text = fill(Path(a.template).read_text(), values)
-    Path("report.html").write_text(to_html(text, a.figures), encoding="utf-8")
+    check_figures(text, a.figures)
+    Path("report.md").write_text(text, encoding="utf-8")
     Path("figures").mkdir(exist_ok=True)
     for f in a.figures:
         shutil.copy(f, Path("figures") / Path(f).name)

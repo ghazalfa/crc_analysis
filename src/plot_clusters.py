@@ -5,7 +5,7 @@
                                 cluster / hypermutation / side / stage tracks
   k_selection.png               mean silhouette for each k (chosen k highlighted)
   cluster_gene_frequency.png    % of tumours mutated per gene in each cluster (* = enriched, q < 0.05)
-  cluster_characteristics.png   per-cluster hypermutation, right-colon, READ share and bootstrap stability
+  cluster_characteristics.png   per-cluster hypermutation, READ share and bootstrap stability
 """
 import argparse
 import json
@@ -179,9 +179,9 @@ def gene_frequency_plot(enr, summary):
 def characteristics_plot(summary):
     s = summary.sort_values("cluster")
     colors = cluster_colors(s["cluster"])
-    panels = [("pct_hypermutated", "% hypermutated", 100), ("pct_right_colon", "% right colon\n(known site)", 100),
-              ("pct_READ", "% rectal (READ)", 100), ("stability", "Bootstrap stability\n(mean Jaccard)", 1)]
-    fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), sharey=True)
+    panels = [("pct_hypermutated", "% hypermutated", 100), ("pct_READ", "% rectal (READ)", 100),
+              ("stability", "Bootstrap stability\n(mean Jaccard)", 1)]
+    fig, axes = plt.subplots(1, 3, figsize=(10.5, 3.4), sharey=True)
     y = np.arange(len(s))
     for ax, (col, title, xmax) in zip(axes, panels):
         vals = s[col].values.astype(float)

@@ -2,7 +2,7 @@
 
 A Nextflow pipeline that groups TCGA colorectal tumours by their driver-gene mutations and then compares gene expression between the groups.
 
-BIOF 501 final project, Ghazal Fallahpour Sichani
+BIOF 501 final project
 
 - [Background](#background)
 - [Question and rationale](#question-and-rationale)
@@ -26,21 +26,21 @@ Colorectal cancer (CRC) is a leading cause of cancer-related death worldwide, an
 | CMS3 | More frequent KRAS mutation, low CIN, mixed MSI status |
 | CMS4 | Low MSI, high CIN, TGF-beta and integrin signalling |
 
-The CMS work provides two classifiers, a random forest (RF) and a single sample predictor (SSP). In a comparison of 100 TCGA patients made for this project's presentation, the two often disagreed on the same patient, and changing the protocol also changed the calls. That comparison is motivation only; this pipeline does not reproduce it.
+The CMS work provides two classifiers, a random forest (RF) and a single sample predictor (SSP). In a comparison of 100 TCGA patients, the two often disagreed on the same patient, and changing the hyperparameters also changed the calls. This incongruency is the motivation for creating new subtyping.
 
 ## Question and rationale
 
 **Can clustering somatic mutations, then interpreting the clusters by differential expression, give more reliable CRC subtypes?**
 
-Expression-based calls depend on normalisation and on the cohort used for centring. Whether a driver gene is mutated is a simpler yes/no measurement, so it is a reasonable alternative basis for grouping tumours. Expression is then used to interpret the groups rather than to define them.
+Expression-based calls depend on normalisation and on the cohort used for centring. Whether a driver gene is mutated is a simpler binary measurement, so it is a reasonable alternative basis for grouping tumours. Expression is then used to interpret the groups rather than to define them.
 
 | Design choice | Reason |
 |---|---|
 | Nextflow | The whole analysis is automated, resumable and repeatable on another machine. |
 | Driver-gene panel [2] | In an unrestricted matrix, long genes are often mutated by chance. |
 | Jaccard distance | Ignores genes that neither tumour has mutated, which suits a mostly-zero matrix. |
-| Ward linkage | Gave groups large enough to compare; average linkage mostly split off single tumours. |
-| Silhouette and bootstrap | Measure separation and reproducibility, which are different properties. |
+| Ward linkage | Gave groups large enough to compare as average linkage mostly split off single tumours. |
+| Silhouette and bootstrap | Measure separation and reproducibility which are important properties for creating subtypes |
 | PyDESeq2 with a site covariate | Models counts directly and adjusts for TCGA collection site. |
 
 ## Pipeline
@@ -67,7 +67,7 @@ flowchart LR
     PC --> M
     PD --> M
     T[report_template.md] --> M
-    M --> H[report.html]
+    M --> H[report.md]
 ```
 
 | Stage | What it does | Output folder |
@@ -123,18 +123,10 @@ The 25 tumours with no kept driver mutation are set aside as `C0_no_driver`.
 
 ## How to run
 
-Requirements: macOS or Linux (amd64 or arm64), internet access and about 5 GB of free disk space. On Windows, use WSL2.
 
-**1. Install conda**, if `conda --version` fails:
+**1. Install conda**
 
-```bash
-curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
-bash "Miniforge3-$(uname)-$(uname -m).sh"
-```
-
-Answer `yes` when asked to initialise conda, then open a new terminal.
-
-**2. Install Nextflow** (this also installs Java):
+**2. Install Nextflow** :
 
 ```bash
 conda create -n nextflow --override-channels -c conda-forge -c bioconda nextflow
@@ -159,32 +151,21 @@ nextflow run main.nf
 
 The first run downloads the data and builds the conda environment (about 1 GB). The analysis uses up to 6 cores and took about 3 minutes on a laptop, including the environment build but not the data download.
 
-**5. Open the report**, `results/05_report/report.html`, in a browser.
+**5. Open the report**, `results/05_report/report.md`, in any Markdown viewer (VS Code preview, GitHub).
 
 ### Options
 
-Defaults are in [nextflow.config](nextflow.config). Override any of them on the command line:
+Defaults are in [nextflow.config](nextflow.config) but they can be overriden in command line
 
 | Option | Default | Meaning |
 |---|---|---|
 | `--k` | 2 | Number of clusters; 0 picks k by silhouette |
 | `--min_freq` | 0.05 | Minimum mutation frequency for a panel gene |
-| `--exclude_hypermutated` | false | Cluster only non-hypermutated tumours |
-| `--de_alpha` | 0.05 | Adjusted p-value cutoff |
-| `--de_min_lfc` | 1 | Absolute log2 fold-change cutoff |
-| `--max_cpus` | 6 | Maximum cores |
 | `--outdir` | results | Output folder |
-
-Add `-resume` to reuse finished steps, for example `nextflow run main.nf --k 3 -resume`.
-
-### Troubleshooting
-
-- **`conda: command not found`:** open a new terminal, or run `conda init` first.
-- **Checksum or download error:** delete the affected file from `data/raw` and rerun.
 
 ## Expected results
 
-Reference outputs from the default settings are in [expected_results/](expected_results/). On the same machine, two complete runs gave identical tables and PNG figures. Across machines, small floating-point differences in p-values are possible.
+Reference outputs from the default settings are in [expected_results/](expected_results/). 
 
 | Stage | Output in `results/` | Expected value | Reference copy |
 |---|---|---|---|
@@ -194,57 +175,15 @@ Reference outputs from the default settings are in [expected_results/](expected_
 | `CLUSTER_MUTATIONS` | `02_clustering/k_selection.tsv` | Silhouette 0.2233 at k = 2 | [k_selection.tsv](expected_results/k_selection.tsv) |
 | `PREPARE_COUNTS` | `03_counts/prepare_counts_summary.json` | 552 tumours, 21,901 of 60,616 genes | [prepare_counts_summary.json](expected_results/prepare_counts_summary.json) |
 | `DIFFERENTIAL_EXPRESSION` | `04_differential_expression/de_summary.tsv` | 1,814 genes: 742 up and 1,072 down in C2 | [de_summary.tsv](expected_results/de_summary.tsv) |
-| `MAKE_REPORT` | `05_report/report.html` | HTML report with 8 figures | [report.html](expected_results/report.html) |
+| `MAKE_REPORT` | `05_report/report.md` | Markdown report with 8 figures | [report.md](expected_results/report.md) |
 
 ### Two stable but weakly separated clusters
 
-| Cluster | Tumours | Stability (mean Jaccard) | Hypermutated | Right colon | Enriched genes |
-|---|---:|---:|---:|---:|---|
-| C1 | 464 | 0.924 | 1.1% | 36.5% | APC, TP53, KRAS |
-| C2 | 88 | 0.786 | 89.8% | 77.0% | RNF43, BMPR2, BRAF, ACVR2A, KMT2B |
+| Cluster | Tumours | Stability (mean Jaccard) | Hypermutated |
+|---|---:|---:|---:
+| C1 | 464 | 0.924 | 1.1% | 
+| C2 | 88 | 0.786 | 89.8% | 
 
-Both clusters pass the 0.75 stability guideline [3]. The silhouette is highest at k = 2, but at 0.22 it indicates weak separation. **C2 is the hypermutated group.**
-
-![Oncoprint of driver mutations by cluster](expected_results/figures/oncoprint.png)
-
-![Silhouette by number of clusters](expected_results/figures/k_selection.png)
-
-### Differential expression, C2 vs C1
-
-1,814 of 21,887 tested genes differ (adjusted p < 0.05 and at least a two-fold change): 742 are higher and 1,072 lower in C2.
-
-![Volcano plot](expected_results/figures/volcano_plots.png)
-
-![Heatmap of top genes](expected_results/figures/top_de_heatmap.png)
-
-### Supplementary analyses (not part of the Nextflow run)
-
-These R scripts were run separately on the pipeline outputs, with R 4.6.1.
-
-**CMS composition** ([cms/run_cms.R](cms/run_cms.R), CMSclassifier random forest, log2(CPM + 1) input). C2 is 57% CMS1; C1 is mainly CMS2 (31%) and CMS4 (28%). 22% of tumours are unclassified (top probability below 0.5).
-
-![CMS composition by cluster](expected_results/supplementary/cms_proportions.png)
-
-**Overall survival** ([survival/run_km.R](survival/run_km.R)). No significant difference was detected in 522 patients (log-rank p = 0.33; hazard ratio C2 vs C1 0.76, 95% CI 0.44 to 1.32; adjusted for age and stage 1.08, 0.60 to 1.94). C2 has only 15 deaths, so power is low.
-
-![Overall survival by cluster](expected_results/supplementary/km_clusters.png)
-
-To rerun them after the pipeline, from the project folder:
-
-```bash
-Rscript -e 'install.packages("survival", repos="https://cloud.r-project.org")'
-Rscript survival/run_km.R
-
-mkdir -p cms/rlib
-Rscript -e 'install.packages(c("remotes","BiocManager"), repos="https://cloud.r-project.org"); .libPaths(c("cms/rlib", .libPaths())); BiocManager::install("org.Hs.eg.db", lib="cms/rlib", update=FALSE, ask=FALSE); install.packages("randomForest", lib="cms/rlib", repos="https://cloud.r-project.org"); remotes::install_github("dFenix7/CMSclassifier@ba02ec5c88194e34c2a2b6a0c81bc07c36c8e9fa", lib="cms/rlib", upgrade="never")'
-Rscript cms/run_cms.R
-```
-
-The original `Sage-Bionetworks/CMSclassifier` repository was unavailable in November 2026. The copy above has the same commit and tree hashes as the Software Heritage archive of the original.
-
-### Conclusion
-
-Clustering driver-gene mutations gives a reproducible grouping, but it mostly recovers known biology (hypermutation) rather than new subtypes. Mutation data alone does not yet give a finer subtyping than CMS.
 
 ## Directory structure
 
@@ -263,14 +202,12 @@ Clustering driver-gene mutations gives a reproducible grouping, but it mostly re
 │   ├── plot_de.py               # PLOT_DE
 │   ├── make_report.py           # MAKE_REPORT
 │   └── plot_style.py            # shared figure style
-├── report/report_template.md    # report wording
+├── templates/report_template.md # report template: wording only; the filled report is results/05_report/report.md
 ├── data/
 │   ├── sources.csv              # download URLs and md5
 │   ├── crc_driver_genes.tsv     # driver panel
 │   └── raw/                     # downloads (created by the run)
 ├── expected_results/            # reference outputs
-├── cms/run_cms.R                # supplementary: CMS composition
-├── survival/run_km.R            # supplementary: survival
 ├── results/                     # outputs (created by the run)
 │   ├── 01_mutation_matrix/
 │   ├── 02_clustering/
@@ -281,13 +218,8 @@ Clustering driver-gene mutations gives a reproducible grouping, but it mostly re
 └── work/                        # Nextflow cache and conda environments (created by the run)
 ```
 
-## Limitations
-
-- The clusters overlap (silhouette 0.22), and silhouette cannot test whether k = 1 is better.
-- C2 membership and hypermutation almost coincide, so expression differences cannot be attributed to specific driver mutations.
-- MSI status is not available in this pipeline; hypermutation is defined as at least 10 protein-altering mutations per Mb.
-- Fold changes are not shrunken, and tumour purity is not modelled.
-- All tumours come from TCGA; the clusters were not validated in an independent cohort.
+## Gen AI Disclosure
+Claude Opus was heavily used for writing the code in this project. All of the design choices such as deciding on statistical tests, figure choice, models used in the pipeline, and hyperparameter selection was made by the student, however the code was almost exclusively written by Claude.
 
 ## References
 
