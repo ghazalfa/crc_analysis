@@ -139,8 +139,8 @@ This environment is only for Nextflow. Nextflow creates the analysis environment
 **3. Get the code:**
 
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+git clone https://github.com/ghazalfa/crc_analysis
+cd crc_analysis
 ```
 
 **4. Run:**
